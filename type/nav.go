@@ -11,7 +11,7 @@ type Fuel struct {
 	Consumed Consumed `json:"consumed"`
 }
 
-type DestinationOrigin struct {
+type Destination struct {
 	Symbol       string `json:"symbol"`
 	Type         string `json:"type"`
 	SystemSymbol string `json:"systemSymbol"`
@@ -20,10 +20,10 @@ type DestinationOrigin struct {
 }
 
 type Route struct {
-	Destination   DestinationOrigin `json:"destination"`
-	Origin        DestinationOrigin `json:"origin"`
-	DepartureTime string            `json:"departureTime"`
-	Arrival       string            `json:"arrival"`
+	Destination   Destination `json:"destination"`
+	Origin        Destination `json:"origin"`
+	DepartureTime string      `json:"departureTime"`
+	Arrival       string      `json:"arrival"`
 }
 
 type Nav struct {
@@ -32,4 +32,9 @@ type Nav struct {
 	Route          Route  `json:"route"`
 	Status         string `json:"status"`
 	FlightMode     string `json:"flightMode"`
+}
+
+type NavResponse struct {
+	Fuel Fuel
+	Nav  Nav
 }
