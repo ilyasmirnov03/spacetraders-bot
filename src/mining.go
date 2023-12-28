@@ -27,7 +27,7 @@ type Cargo struct {
 }
 
 type NavResponse struct {
-	Data _type.Nav
+	Data _type.NavResponse
 }
 
 type ExtractResponse struct {
@@ -67,24 +67,49 @@ func extract_resources() {
 	fmt.Println("Ship just mined", strconv.Itoa(left)+" spaces left to mine")
 	if left == 0 {
 		fmt.Println("Ship's cargo is full, navigating to selling point.")
-		navigate_to_waypoint(sell_waypoint, sell_cargo)
+		cargo = body.Data.Cargo
+		navigate_to_waypoint(sell_waypoint, sell_cargo, body.Data.Cooldown.RemainingSeconds)
 		return
 	}
 	time.Sleep(time.Duration(body.Data.Cooldown.RemainingSeconds) * time.Second)
 	extract_resources()
 }
 
-func navigate_to_waypoint(waypoint string, on_arrival void_func) {
+func navigate_to_waypoint(waypoint string, on_arrival void_func, remaining_seconds int) {
 	body, err := CallApi[NavResponse]("/my/ships/"+mining_ship+"/navigate", "POST", []byte(`{"waypointSymbol": "`+waypoint+`"}`))
 	if err != nil {
 		return
 	}
-	time_to_arrival, _ := helpers.TimeDiffInSeconds(body.Data.Route.Arrival)
-	fmt.Printf("Navigating to " + waypoint + ", arrives in " + strconv.Itoa(int(time_to_arrival)) + "s")
-	time.Sleep(time.Duration(time_to_arrival) * time.Second)
+	time_to_arrival, _ := helpers.TimeDiffInSeconds(body.Data.Nav.Route.Arrival)
+	cooldown_difference := remaining_seconds - int(time_to_arrival)
+	// Conditionnaly convert to positive integer
+	if remaining_seconds == 0 {
+		cooldown_difference *= -1
+	}
+	fmt.Println("Navigating to " + waypoint + ", arrives in " + strconv.Itoa(int(time_to_arrival)) + "s")
+	time.Sleep(time.Duration(cooldown_difference) * time.Second)
 	on_arrival()
 }
 
-func sell_cargo() {
+func refuel() {
+	CallApi[any]("/my/ships/"+mining_ship+"/refuel", "POST", nil)
+	fmt.Println("Ship is fully refueled")
+}
 
+func sell_cargo() {
+	CallApi[any]("/my/ships/"+mining_ship+"/dock", "POST", nil)
+	for _, v := range cargo.Inventory {
+		body := []byte(`{
+			"symbol": "` + v.Symbol + `",
+			"units": "` + strconv.Itoa(v.Units) + `"
+		}`)
+		_, err := CallApi[any]("/my/ships/"+mining_ship+"/sell", "POST", body)
+		if err != nil {
+			return
+		}
+		fmt.Println("Sold " + strconv.Itoa(v.Units) + " " + v.Symbol)
+	}
+	refuel()
+	CallApi[any]("/my/ships/"+mining_ship+"/orbit", "POST", nil)
+	navigate_to_waypoint(mine_waypoint, extract_resources, 0)
 }
