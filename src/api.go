@@ -15,11 +15,7 @@ func CallApi[T any](url string, method string, body []byte) (*T, error) {
 	client := &http.Client{}
 	uri := ApiURL + url
 	// Create the request
-	var body_to_send *bytes.Buffer = nil
-	if body != nil {
-		body_to_send = bytes.NewBuffer(body)
-	}
-	req, newreq_err := http.NewRequest(method, uri, body_to_send)
+	req, newreq_err := http.NewRequest(method, uri, bytes.NewBuffer(body))
 	if newreq_err != nil {
 		return nil, newreq_err
 	}
