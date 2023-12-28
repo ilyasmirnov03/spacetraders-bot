@@ -11,7 +11,7 @@ func TimeDiffInSeconds(isoDateString string) (int64, error) {
 
 	// Calculate the time difference in seconds
 	currentTime := time.Now().UTC()
-	diffInSeconds := currentTime.Unix() - parsedTime.Unix()
+	diffInSeconds := parsedTime.Unix() - currentTime.Unix()
 
 	return diffInSeconds, nil
 }
