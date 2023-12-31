@@ -75,19 +75,25 @@ func extract_resources() {
 	extract_resources()
 }
 
-func navigate_to_waypoint(waypoint string, on_arrival void_func, remaining_seconds int) {
+func navigate_to_waypoint(waypoint string, on_arrival void_func, cooldown int) {
 	body, err := CallApi[NavResponse]("/my/ships/"+mining_ship+"/navigate", "POST", []byte(`{"waypointSymbol": "`+waypoint+`"}`))
 	if err != nil {
 		return
 	}
 	time_to_arrival, _ := helpers.TimeDiffInSeconds(body.Data.Nav.Route.Arrival)
-	cooldown_difference := remaining_seconds - int(time_to_arrival)
-	// Conditionnaly convert to positive integer
-	if remaining_seconds == 0 {
-		cooldown_difference *= -1
+	// Determine timeout based on cooldown and time to arrival
+	var timeout int
+	if time_to_arrival >= int64(cooldown) {
+		timeout = int(time_to_arrival)
+	} else {
+		timeout = cooldown - int(time_to_arrival)
+		// Conditionnaly convert to positive integer
+		if cooldown == 0 {
+			timeout *= -1
+		}
 	}
 	fmt.Println("Navigating to " + waypoint + ", arrives in " + strconv.Itoa(int(time_to_arrival)) + "s")
-	time.Sleep(time.Duration(cooldown_difference) * time.Second)
+	time.Sleep(time.Duration(timeout) * time.Second)
 	on_arrival()
 }
 
