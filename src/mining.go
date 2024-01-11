@@ -82,15 +82,9 @@ func navigate_to_waypoint(waypoint string, on_arrival void_func, cooldown int) {
 	}
 	time_to_arrival, _ := helpers.TimeDiffInSeconds(body.Data.Nav.Route.Arrival)
 	// Determine timeout based on cooldown and time to arrival
-	var timeout int
-	if time_to_arrival >= int64(cooldown) {
-		timeout = int(time_to_arrival)
-	} else {
-		timeout = cooldown - int(time_to_arrival)
-		// Conditionnaly convert to positive integer
-		if cooldown == 0 {
-			timeout *= -1
-		}
+	timeout := int(time_to_arrival)
+	if time_to_arrival < int64(cooldown) {
+		timeout += cooldown - int(time_to_arrival)
 	}
 	fmt.Println("Navigating to " + waypoint + ", arrives in " + strconv.Itoa(int(time_to_arrival)) + "s")
 	time.Sleep(time.Duration(timeout) * time.Second)
